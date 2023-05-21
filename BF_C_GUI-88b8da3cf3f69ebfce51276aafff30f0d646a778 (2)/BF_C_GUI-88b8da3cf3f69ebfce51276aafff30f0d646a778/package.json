@@ -1,0 +1,35 @@
+{
+  "name": "BF2-C",
+  "version": "1.0.0",
+  "description": "Bodyfitter2-C GUI",
+  "main": "main.js",
+  "scripts": {
+    "webpack-dev": "webpack --mode development",
+    "webpack-dev-qt": "webpack --mode development",
+    "webpack-prod": "webpack --mode production"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.10",
+    "@babel/preset-react": "^7.12.10",
+    "babel-loader": "^8.2.2",
+    "less": "^3.13.0",
+    "webpack": "^5.10.3",
+    "webpack-cli": "^3.3.12"
+  },
+  "dependencies": {
+    "html2canvas": "^1.0.0-rc.7",
+    "react": "^16.14.0",
+    "react-circular-progressbar": "^1.0.0",
+    "react-dom": "^16.14.0",
+    "react-odometerjs": "^2.1.0",
+    "react-router-dom": "^5.2.0",
+    "react-router-transition": "^1.4.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ]
+  }
+}
