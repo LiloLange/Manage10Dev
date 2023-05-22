@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" id="viewPort" content="user-scalable=0"/>
+    <meta name="format-detection" content="telephone=no">
+    <title>Bodyfitter2-C GUI</title>
+    <link href="css/main.css" media="all" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<script src="js/qwebchannel.js"></script>
+<script src="js/three.js"></script>
+<script src="base/preset.json"></script>
+<script src="base/demo.json"></script>
+<script src="js/moment.min.js"></script>
+<script src="../port.json"></script>
+<script id="fragShaderCubicBobyfitter" type="shader-code">
+    uniform sampler2D readings;
+    uniform sampler2D colormap;
+    uniform int col;
+    uniform int row;
+    uniform int isGrid;
+    varying vec3 vUv;
+
+    void main() {
+        float realX = vUv.x - 5.0 + float (col) * 5.0;
+        int curCol = int (floor (realX / 10.0));
+        if (realX < 0.0) {curCol = -1;}
+        float realY = vUv.y - 5.0 + float (row) * 5.0;
+        int curRow = int (floor (realY / 10.0));
+        if (realY < 0.0) {curRow = -1;}
+        float indcol = realX - float (curCol * 10);
+        float indrow = realY - float (curRow * 10);
+
+        int p00x = curCol - 1;      int p00y = curRow - 1;
+        int p10x = curCol;          int p10y = curRow - 1;
+        int p20x = curCol + 1;      int p20y = curRow - 1;
+        int p30x = curCol + 2;      int p30y = curRow - 1;
+
+        int p01x = curCol - 1;      int p01y = curRow;
+        int p11x = curCol;          int p11y = curRow;
+        int p21x = curCol + 1;      int p21y = curRow;
+        int p31x = curCol + 2;      int p31y = curRow;
+
+        int p02x = curCol - 1;      int p02y = curRow + 1;
+        int p12x = curCol;          int p12y = curRow + 1;
+        int p22x = curCol + 1;      int p22y = curRow + 1;
+        int p32x = curCol + 2;      int p32y = curRow + 1;
+
+        int p03x = curCol - 1;      int p03y = curRow + 2;
+        int p13x = curCol;          int p13y = curRow + 2;
+        int p23x = curCol + 1;      int p23y = curRow + 2;
+        int p33x = curCol + 2;      int p33y = curRow + 2;
+
+        if (p00x < 0) {p00x = 0;}   if (p00x > col - 1) {p00x = col - 1;}   if (p00y < 0) {p00y = 0;}   if (p00y > row - 1) {p00y = row - 1;}
+        if (p10x < 0) {p10x = 0;}   if (p10x > col - 1) {p10x = col - 1;}   if (p10y < 0) {p10y = 0;}   if (p10y > row - 1) {p10y = row - 1;}
+        if (p20x < 0) {p20x = 0;}   if (p20x > col - 1) {p20x = col - 1;}   if (p20y < 0) {p20y = 0;}   if (p20y > row - 1) {p20y = row - 1;}
+        if (p30x < 0) {p30x = 0;}   if (p30x > col - 1) {p30x = col - 1;}   if (p30y < 0) {p30y = 0;}   if (p30y > row - 1) {p30y = row - 1;}
+
+        if (p01x < 0) {p01x = 0;}   if (p01x > col - 1) {p01x = col - 1;}   if (p01y < 0) {p01y = 0;}   if (p01y > row - 1) {p01y = row - 1;}
+        if (p11x < 0) {p11x = 0;}   if (p11x > col - 1) {p11x = col - 1;}   if (p11y < 0) {p11y = 0;}   if (p11y > row - 1) {p11y = row - 1;}
+        if (p21x < 0) {p21x = 0;}   if (p21x > col - 1) {p21x = col - 1;}   if (p21y < 0) {p21y = 0;}   if (p21y > row - 1) {p21y = row - 1;}
+        if (p31x < 0) {p31x = 0;}   if (p31x > col - 1) {p31x = col - 1;}   if (p31y < 0) {p31y = 0;}   if (p31y > row - 1) {p31y = row - 1;}
+
+        if (p02x < 0) {p02x = 0;}   if (p02x > col - 1) {p02x = col - 1;}   if (p02y < 0) {p02y = 0;}   if (p02y > row - 1) {p02y = row - 1;}
+        if (p12x < 0) {p12x = 0;}   if (p12x > col - 1) {p12x = col - 1;}   if (p12y < 0) {p12y = 0;}   if (p12y > row - 1) {p12y = row - 1;}
+        if (p22x < 0) {p22x = 0;}   if (p22x > col - 1) {p22x = col - 1;}   if (p22y < 0) {p22y = 0;}   if (p22y > row - 1) {p22y = row - 1;}
+        if (p32x < 0) {p32x = 0;}   if (p32x > col - 1) {p32x = col - 1;}   if (p32y < 0) {p32y = 0;}   if (p32y > row - 1) {p32y = row - 1;}
+
+        if (p03x < 0) {p03x = 0;}   if (p03x > col - 1) {p03x = col - 1;}   if (p03y < 0) {p03y = 0;}   if (p03y > row - 1) {p03y = row - 1;}
+        if (p13x < 0) {p13x = 0;}   if (p13x > col - 1) {p13x = col - 1;}   if (p13y < 0) {p13y = 0;}   if (p13y > row - 1) {p13y = row - 1;}
+        if (p23x < 0) {p23x = 0;}   if (p23x > col - 1) {p23x = col - 1;}   if (p23y < 0) {p23y = 0;}   if (p23y > row - 1) {p23y = row - 1;}
+        if (p33x < 0) {p33x = 0;}   if (p33x > col - 1) {p33x = col - 1;}   if (p33y < 0) {p33y = 0;}   if (p33y > row - 1) {p33y = row - 1;}
+
+        vec4 p00t = texture2D(readings, vec2(float (p00x) / float (col - 1), float(p00y) / float(row - 1)));
+        vec4 p10t = texture2D(readings, vec2(float (p10x) / float (col - 1), float(p10y) / float(row - 1)));
+        vec4 p20t = texture2D(readings, vec2(float (p20x) / float (col - 1), float(p20y) / float(row - 1)));
+        vec4 p30t = texture2D(readings, vec2(float (p30x) / float (col - 1), float(p30y) / float(row - 1)));
+
+        vec4 p01t = texture2D(readings, vec2(float (p01x) / float (col - 1), float(p01y) / float(row - 1)));
+        vec4 p11t = texture2D(readings, vec2(float (p11x) / float (col - 1), float(p11y) / float(row - 1)));
+        vec4 p21t = texture2D(readings, vec2(float (p21x) / float (col - 1), float(p21y) / float(row - 1)));
+        vec4 p31t = texture2D(readings, vec2(float (p31x) / float (col - 1), float(p31y) / float(row - 1)));
+
+        vec4 p02t = texture2D(readings, vec2(float (p02x) / float (col - 1), float(p02y) / float(row - 1)));
+        vec4 p12t = texture2D(readings, vec2(float (p12x) / float (col - 1), float(p12y) / float(row - 1)));
+        vec4 p22t = texture2D(readings, vec2(float (p22x) / float (col - 1), float(p22y) / float(row - 1)));
+        vec4 p32t = texture2D(readings, vec2(float (p32x) / float (col - 1), float(p32y) / float(row - 1)));
+
+        vec4 p03t = texture2D(readings, vec2(float (p03x) / float (col - 1), float(p03y) / float(row - 1)));
+        vec4 p13t = texture2D(readings, vec2(float (p13x) / float (col - 1), float(p13y) / float(row - 1)));
+        vec4 p23t = texture2D(readings, vec2(float (p23x) / float (col - 1), float(p23y) / float(row - 1)));
+        vec4 p33t = texture2D(readings, vec2(float (p33x) / float (col - 1), float(p33y) / float(row - 1)));
+
+        float p00 = float ((p00t.r * 256.0 + p00t.g) / 255.0);
+        float p10 = float ((p10t.r * 256.0 + p10t.g) / 255.0);
+        float p20 = float ((p20t.r * 256.0 + p20t.g) / 255.0);
+        float p30 = float ((p30t.r * 256.0 + p30t.g) / 255.0);
+
+        float p01 = float ((p01t.r * 256.0 + p01t.g) / 255.0);
+        float p11 = float ((p11t.r * 256.0 + p11t.g) / 255.0);
+        float p21 = float ((p21t.r * 256.0 + p21t.g) / 255.0);
+        float p31 = float ((p31t.r * 256.0 + p31t.g) / 255.0);
+
+        float p02 = float ((p02t.r * 256.0 + p02t.g) / 255.0);
+        float p12 = float ((p12t.r * 256.0 + p12t.g) / 255.0);
+        float p22 = float ((p22t.r * 256.0 + p22t.g) / 255.0);
+        float p32 = float ((p32t.r * 256.0 + p32t.g) / 255.0);
+
+        float p03 = float ((p03t.r * 256.0 + p03t.g) / 255.0);
+        float p13 = float ((p13t.r * 256.0 + p13t.g) / 255.0);
+        float p23 = float ((p23t.r * 256.0 + p23t.g) / 255.0);
+        float p33 = float ((p33t.r * 256.0 + p33t.g) / 255.0);
+
+        if (curCol == -1) {
+            p00 = 0.0;
+            p01 = 0.0;
+            p02 = 0.0;
+            p03 = 0.0;
+            p10 = 0.0;
+            p11 = 0.0;
+            p12 = 0.0;
+            p13 = 0.0;
+        }
+        if (curCol == 0) {
+            p00 = 0.0;
+            p01 = 0.0;
+            p02 = 0.0;
+            p03 = 0.0;
+        }
+
+        if (curRow == -1) {
+            p00 = 0.0;
+            p10 = 0.0;
+            p20 = 0.0;
+            p30 = 0.0;
+            p01 = 0.0;
+            p11 = 0.0;
+            p21 = 0.0;
+            p31 = 0.0;
+        }
+        if (curRow == 0) {
+            p00 = 0.0;
+            p10 = 0.0;
+            p20 = 0.0;
+            p30 = 0.0;
+        }
+
+
+
+        if (curCol == col - 2) {
+            p30 = 0.0;
+            p31 = 0.0;
+            p32 = 0.0;
+            p33 = 0.0;
+        }
+
+        if (curRow == row - 2) {
+            p03 = 0.0;
+            p13 = 0.0;
+            p23 = 0.0;
+            p33 = 0.0;
+        }
+
+        if (curCol == col - 1) {
+            p30 = 0.0;
+            p31 = 0.0;
+            p32 = 0.0;
+            p33 = 0.0;
+            p20 = 0.0;
+            p21 = 0.0;
+            p22 = 0.0;
+            p23 = 0.0;
+        }
+
+        if (curRow == row - 1) {
+            p03 = 0.0;
+            p13 = 0.0;
+            p23 = 0.0;
+            p33 = 0.0;
+            p02 = 0.0;
+            p12 = 0.0;
+            p22 = 0.0;
+            p32 = 0.0;
+        }
+
+        //Cubic
+        float a00 = p11;
+        float a01 = -0.5 * p10 + 0.5 * p12;
+        float a02 = p10 - 2.5 * p11 + 2.0 * p12 - 0.5 * p13;
+        float a03 = -0.5 * p10 + 1.5 * p11 - 1.5 * p12 + 0.5 * p13;
+        float a10 = -0.5 * p01 + 0.5 * p21;
+        float a11 = 0.25 * p00 - 0.25 * p02 - 0.25 * p20 + 0.25 * p22;
+        float a12 = -0.5 * p00 + 1.25 * p01 - p02 + 0.25 * p03 + 0.5 * p20 - 1.25 * p21 + p22 - 0.25 * p23;
+        float a13 = 0.25 * p00 - 0.75 * p01 + 0.75 * p02 - 0.25 * p03 - 0.25 * p20 + 0.75 * p21 - 0.75 * p22 + 0.25 * p23;
+        float a20 = p01 - 2.5 * p11 + 2.0 * p21 - 0.5 * p31;
+        float a21 = -0.5 * p00 + 0.5 * p02 + 1.25 * p10 - 1.25 * p12 - p20 + p22 + 0.25 * p30 - 0.25 * p32;
+        float a22 = p00 - 2.5 * p01 + 2.0 * p02 - 0.5 * p03 - 2.5 * p10 + 6.25 * p11 - 5.0 * p12 + 1.25 * p13 + 2.0 * p20 - 5.0 * p21 + 4.0 * p22 - p23 - 0.5 * p30 + 1.25 * p31 - p32 + 0.25 * p33;
+        float a23 = -0.5 * p00 + 1.5 * p01 - 1.5 * p02 + 0.5 * p03 + 1.25 * p10 - 3.75 * p11 + 3.75 * p12 - 1.25 * p13 - p20 + 3.0 * p21 - 3.0 * p22 + p23 + 0.25 * p30 - 0.75 * p31 + 0.75 * p32 - 0.25 * p33;
+        float a30 = -0.5 * p01 + 1.5 * p11 - 1.5 * p21 + 0.5 * p31;
+        float a31 = 0.25 * p00 - 0.25 * p02 - 0.75 * p10 + 0.75 * p12 + 0.75 * p20 - 0.75 * p22 - 0.25 * p30 + 0.25 * p32;
+        float a32 = -0.5 * p00 + 1.25 * p01 - p02 + 0.25 * p03 + 1.5 * p10 - 3.75 * p11 + 3.0 * p12 - 0.75 * p13 - 1.5 * p20 + 3.75 * p21 - 3.0 * p22 + 0.75 * p23 + 0.5 * p30 - 1.25 * p31 + p32 - 0.25 * p33;
+        float a33 = 0.25 * p00 - 0.75 * p01 + 0.75 * p02 - 0.25 * p03 - 0.75 * p10 + 2.25 * p11 - 2.25 * p12 + 0.75 * p13 + 0.75 * p20 - 2.25 * p21 + 2.25 * p22 - 0.75 * p23 - 0.25 * p30 + 0.75 * p31 - 0.75 * p32 + 0.25 * p33;
+
+
+        float dx = indcol / 10.0;
+        float dy = indrow / 10.0;
+        float x2 = dx * dx;
+        float x3 = x2 * dx;
+        float y2 = dy * dy;
+        float y3 = y2 * dy;
+
+        float pp = (a00 + a01 * dy + a02 * y2 + a03 * y3) + (a10 + a11 * dy + a12 * y2 + a13 * y3) * dx + (a20 + a21 * dy + a22 * y2 + a23 * y3) * x2 + (a30 + a31 * dy + a32 * y2 + a33 * y3) * x3;
+        if (pp < 0.0) {pp = 0.0;}     if (pp > 1.0) {pp = 1.0;}
+        //^^Cubic^^
+
+        int pos = int (pp * 65535.0);
+        int posx = int (pos / 256);
+        int posy = int (pos - posx * 256);
+
+        vec4 color = texture2D(colormap, vec2(float (posy) / 255.0, float (posx) / 255.0));
+
+
+        //anisotropic grid -----
+
+		vec2 coord = vUv.xy / vec2(10.0, 10.0);
+		vec2 grid = vec2 (0.0, 0.0);
+        if (mod(float (col), 2.0)==0.0) {
+            grid.x = abs( fract( coord.x - 0.5 ) - 0.5 ) / fwidth(coord.x);
+        } else {
+            grid.x = abs( fract( coord.x - 1.0 ) - 0.5 ) / fwidth(coord.x);
+        }
+        if (mod(float (row), 2.0)==0.0) {
+            grid.y = abs( fract( coord.y - 0.5 ) - 0.5 ) / fwidth(coord.y);
+        } else {
+            grid.y = abs( fract( coord.y - 1.0 ) - 0.5 ) / fwidth(coord.y);
+        }
+
+		float line = min(grid.x, grid.y);
+
+		vec3 colorRGB = vec3(color.r, color.g, color.b);
+		vec3 colorBlend = min(colorRGB, vec3(line));
+		vec3 lines = vec3(line);
+		float alfa = color.a;
+		if (lines.r < 1.0 && lines.g < 1.0 && lines.b < 1.0) {
+		   colorBlend.r = 0.3;
+		   colorBlend.g = 0.3;
+		   colorBlend.b = 0.3;
+		   alfa = 1.0;
+		}
+
+
+        if (isGrid == 1) {
+            gl_FragColor = vec4( colorBlend, alfa);
+        } else {
+            gl_FragColor = color;
+        }
+
+		//anisotropic grid ^^^^^
+    }
+</script>
+<script id="vertexShaderPlane" type="x-shader/x-vertex">
+    varying vec3 vUv;
+	void main()	{
+	    vUv = position;
+	    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
+</script>
+<script>
+    if (window.wsURL === undefined) {
+        window.wsURL = 'ws://localhost:12345';
+    }
+    //window.wsURL = 'ws://192.168.50.228:12345';
+    //window.wsURL = 'ws://100.2.116.106:12345';
+    //window.wsURL = 'ws://71.190.194.28:12345';
+    window.updaterUUID = '123123-123123-12-12-1-321';
+    window.socket = null;
+    window.core = null;
+    window.updater = null;
+    window.channel = null;
+    window.curSeller = null;
+
+    window.webGLfilter = true;
+    window.cellSize = 0.1;
+    //window.interpolation = 'cubic';
+
+    //window.maxCorrection = -20; // for 0 mattress (+/- percents).
+    //window.maxCorrection123 = -20; // for 1, 2, 3 mattresses (+/- percents).
+
+    window.testMode = false;
+    window.brand = 'BF' //BF - Bodyfitter;
+                        //MM - Mundo Mattress;
+                        //VI - Viasono
+                        //PU - PURITAS Gesundheits- & Wohlfühlhaus GmbH & Co. KG
+    window.login = 'bf2-c';
+    //window.login = 'viasono-c';
+
+    window.export = null;
+    window.search = null;
+
+    window.update = 'updateGUI';
+
+    window.settings = {
+        mode: 'default',
+        maxCorrection: -20,
+        maxCorrection123: -20,
+        mattressName: ['Mattress 1', 'Mattress 2', 'Mattress 3', 'Mattress 4'],
+        system: 'imperial',
+        language: 'en',
+        emailMode: 'default',
+        emailServer: '',
+        emailPort: 0,
+        emailUser: '',
+        emailPassword: '',
+        emailProtocol: 0,
+        isGrid: false,
+        isScale: false,
+        multiplierEffect: 1.0,
+    };
+
+    window.en = {
+        ln: 'en',
+        tapToStartButton: 'Tap to start',
+        settingsModeTitle: 'Mode',
+        settingsDefaultMode: 'Default Mode',
+        settingsDefaultModeDescription: 'Portrait and landscape orientations; two, three, or four mattresses; back and side positions.',
+        settingsDuoMode: 'Duo Mode',
+        settingsDuoModeDescription: 'Portrait orientations; two mattresses; back position.',
+        settingsLanguageTitle: 'Language',
+        settingsOptionsTitle: 'Options',
+        settingsMaxCorrectionFirst: 'Max correction for the first mattress',
+        settingsMaxCorrectionOther: 'Max correction for other mattresses',
+        settingsUnitSystemTitle: 'Unit System',
+        settingsMetric: 'Metric',
+        settingsImperial: 'Imperial',
+        settingsDefMattNameTitle: 'Default mattress names',
+        settingsMattress: 'Mattress',
+        settingsCancelButton: 'Cancel',
+        settingsSaveButton: 'Save',
+        profileTitle: 'CUSTOMER PROFILE',
+        profileName: 'Name',
+        profilePhone: 'Phone',
+        profileEmail: 'Email',
+        profilePrevButton: 'PREV',
+        profileNextButton: 'NEXT',
+        mainLowLabel: 'LOW',
+        mainPressureLabel: 'PRESSURE',
+        mainHighLabel: 'HIGH',
+        mainRefreshSensors: 'Refresh sensors',
+        mainStartButton: 'Start',
+        mainStopButton: 'Stop',
+        mainReportButton: 'Report',
+        mainEmailButton: 'Email',
+        mainDoneButton: 'Done',
+        mainScanningLabel: 'Scanning for a sensor',
+        mainSensorNotFound: 'Sensor not found',
+        mainRetryButton: 'Retry',
+        mainDemoModeButton: 'Demo mode',
+        mainPleaseWaitLabel: 'Please wait',
+        mainBackPos: 'Back',
+        mainSidePos: 'Side',
+        mainSensor: 'Sensor',
+        mainAvgPressure: 'Average Pressure',
+        mainSurfaceArea: 'Surface Area',
+        mainSupportArea: 'Support Area',
+        mainOverpressureArea: 'Overpressure Area',
+        mainStdDeviation: 'Standard Deviation',
+        mainEmailTitle: 'Enter your email',
+        mainEmailCancelButton: 'Cancel',
+        mainEmailSendButton: 'Send',
+        mainEmailResultTitle: 'The report has been sent',
+        mainEmailCloseButton: 'Close',
+        mainEmailIncorrect: 'Email address is incorrect',
+        multiplierEffect: 'Multiplier Effect',
+        unitGCM2: 'g/cm²',
+        unitPSI: 'PSI',
+        unitCM2: 'cm²',
+        unitIN2: 'in²',
+        reportDoneButton: 'Done',
+        reportEmailButton: 'Email',
+        reportPrintButton: 'Print',
+        pageBackButton: 'Back',
+        sessionsDateRange: 'Date range',
+        sessionsToday: 'Today',
+        sessionsThisWeek: 'This week',
+        sessionsThisMonth: 'This month',
+        sessionsLast7Days: 'Last 7 days',
+        sessionsLast30Days: 'Last 30 days',
+        sessionsCustom: 'Custom...',
+        sessionsStartDate: 'Start date',
+        sessionsEndDate: 'End date',
+        sessionsName: 'Name',
+        sessionsEmail: 'Email',
+        sessionsPhone: 'Phone',
+        sessionsSearchButton: 'SEARCH',
+        sessionsDateTimeLabel: 'Date Time',
+        sessionsClientLabel: 'Client',
+        sessionsPressureMapsLabel: 'Pressure maps',
+        sessionsOpeningLabel: 'Opening session data',
+        sessionsCloseButton: 'Close',
+        sessionsNothingFound: 'Nothing found',
+        tplHello: 'Hello %name%,',
+        tplName: 'Customer',
+        tplTitle: 'Here\'s Your Profile Match',
+        tplTitle2: 'Here\'s Your Result',
+        tplBack: 'Back',
+        tplSide: 'Side',
+        tplSubject1: 'Your mattress pressure mapping experience',
+        updateTitle: 'MAINTENANCE',
+        updateNeedUpdate: 'This application must be updated',
+        updateNeedRestart: 'This application must be restarted',
+        updateUpdateButton: 'UPDATE',
+        updateRestartButton: 'RESTART',
+        emailDefaultMode: 'Default',
+        emailCustomMode: 'Custom',
+        emailCustomTitle: 'Custom email settings',
+        emailServer: 'Server',
+        emailPort: 'Port',
+        emailUser: 'Username',
+        emailPassword: 'Password',
+        emailProtocol: 'Protocol',
+        emailTryToConnect: 'Try to connect',
+        pressureMapGrid: 'Pressure Map Grid',
+        colorbarScale: 'Colorbar Scale',
+    }
+    window.ru = {
+        ln: 'ru',
+        tapToStartButton: 'Нажмите для старта',
+        settingsModeTitle: 'Режим',
+        settingsDefaultMode: 'Стандартный режим',
+        settingsDefaultModeDescription: 'Вертикальная и горизонтальная ориентация; два, три или четыре матраса; положение на спине и на боку.',
+        settingsDuoMode: 'Режим двух матрасов',
+        settingsDuoModeDescription: 'Только вертикальная ориентация; два матраса; положение на спине.',
+        settingsLanguageTitle: 'Локализация',
+        settingsOptionsTitle: 'Настройки',
+        settingsMaxCorrectionFirst: 'Корректировка максимума для первого матраса',
+        settingsMaxCorrectionOther: 'Корректировка максимума для остальных матрасов',
+        settingsUnitSystemTitle: 'Система мер',
+        settingsMetric: 'Метрическая',
+        settingsImperial: 'Имперская',
+        settingsDefMattNameTitle: 'Названия матрасов по умолчанию',
+        settingsMattress: 'Матрас',
+        settingsCancelButton: 'Отмена',
+        settingsSaveButton: 'Сохранить',
+        profileTitle: 'ДАННЫЕ КЛИЕНТА',
+        profileName: 'Имя',
+        profilePhone: 'Телефон',
+        profileEmail: 'Email',
+        profilePrevButton: 'НАЗАД',
+        profileNextButton: 'ДАЛЕЕ',
+        mainLowLabel: 'НИЗКОЕ',
+        mainPressureLabel: 'ДАВЛЕНИЕ',
+        mainHighLabel: 'ВЫСОКОЕ',
+        mainRefreshSensors: 'Обновить список сенсоров',
+        mainStartButton: 'Старт',
+        mainStopButton: 'Стоп',
+        mainReportButton: 'Отчет',
+        mainEmailButton: 'Email',
+        mainDoneButton: 'Выход',
+        mainScanningLabel: 'Поиск сенсоров',
+        mainSensorNotFound: 'Сенсоры не найдены',
+        mainRetryButton: 'Повторить',
+        mainDemoModeButton: 'Демо режим',
+        mainPleaseWaitLabel: 'Пожалуйста, подождите',
+        mainBackPos: 'Спина',
+        mainSidePos: 'Бок',
+        mainSensor: 'Сенсор',
+        mainAvgPressure: 'Среднее давление',
+        mainSurfaceArea: 'Площадь',
+        mainSupportArea: 'Площадь',
+        mainOverpressureArea: 'Площадь жесткости',
+        mainStdDeviation: 'Ср.квадр. отклонение',
+        mainEmailTitle: 'Введите ваш email',
+        mainEmailCancelButton: 'Отмена',
+        mainEmailSendButton: 'Отправить',
+        mainEmailResultTitle: 'Отчет был отправлен',
+        mainEmailCloseButton: 'Закрыть',
+        mainEmailIncorrect: 'Некорректный email адрес',
+        unitGCM2: 'г/см²',
+        unitPSI: 'PSI',
+        unitCM2: 'см²',
+        unitIN2: 'дюйм²',
+        reportDoneButton: 'Выход',
+        reportEmailButton: 'Email',
+        reportPrintButton: 'Печать',
+        pageBackButton: 'Назад',
+        sessionsDateRange: 'Период',
+        sessionsToday: 'Сегодня',
+        sessionsThisWeek: 'Текущая неделя',
+        sessionsThisMonth: 'Текущий месяц ',
+        sessionsLast7Days: 'Последние 7 дней',
+        sessionsLast30Days: 'Последние 30 дней',
+        sessionsCustom: 'Выборочный...',
+        sessionsStartDate: 'Нада начала',
+        sessionsEndDate: 'Дата окончания',
+        sessionsName: 'Имя',
+        sessionsEmail: 'Email',
+        sessionsPhone: 'Телефон',
+        sessionsSearchButton: 'ИСКАТЬ',
+        sessionsDateTimeLabel: 'Дата, время',
+        sessionsClientLabel: 'Клиент',
+        sessionsPressureMapsLabel: 'Карты давления',
+        sessionsOpeningLabel: 'Загрузка сессии',
+        sessionsCloseButton: 'Закрыть',
+        sessionsNothingFound: 'Ничего не найдено',
+        tplHello: 'Здравствуйте, %name%!',
+        tplName: 'Клиент',
+        tplTitle: 'Наиболее подходящий для вас матрас',
+        tplTitle2: 'Ваш персональный результат',
+        tplBack: 'Спина',
+        tplSide: 'Бок',
+        tplSubject1: 'Персональные рекомендации по выбору матраса',
+        updateTitle: 'ОБСЛУЖИВАНИЕ',
+        updateNeedUpdate: 'Необходимо обновить приложение',
+        updateNeedRestart: 'Необходимо перезагрузить приложение',
+        updateUpdateButton: 'ОБНОВИТЬ',
+        updateRestartButton: 'ПЕРЕЗАГРУЗИТЬ',
+        emailDefaultMode: 'По умолчанию',
+        emailCustomMode: 'Пользовательский',
+        emailCustomTitle: 'Пользовательские настройки email',
+        emailServer: 'Сервер',
+        emailPort: 'Порт',
+        emailUser: 'Имя пользователя',
+        emailPassword: 'Пароль',
+        emailProtocol: 'Протокол',
+        emailTryToConnect: 'Протестировать подключение',
+        pressureMapGrid: 'Сетка на карте давления',
+        colorbarScale: 'Градуировка шкалы',
+    }
+    window.es = {
+        ln: 'es',
+        tapToStartButton: 'Toque para iniciar',
+        settingsModeTitle: 'Modo',
+        settingsDefaultMode: 'Modo predeterminado',
+        settingsDefaultModeDescription: 'Orientaciones de retrato y paisaje; dos, tres, o cuatro colchones; negro y posiciones laterales',
+        settingsDuoMode: 'Modo dúo',
+        settingsDuoModeDescription: 'Orientaciones de retrato; dos colchones; posición de espalda.',
+        settingsLanguageTitle: 'Idioma',
+        settingsOptionsTitle: 'Opciones',
+        settingsMaxCorrectionFirst: 'Correción máxima para el primer colchón',
+        settingsMaxCorrectionOther: 'Correción máxima para otros colchones',
+        settingsUnitSystemTitle: 'Sistema de la Unidad',
+        settingsMetric: 'Métrico',
+        settingsImperial: 'Imperial',
+        settingsDefMattNameTitle: 'Nombres de colchón predeterminados',
+        settingsMattress: 'Colchón',
+        settingsCancelButton: 'Cancelar',
+        settingsSaveButton: 'Guardar',
+        profileTitle: 'PERFIL DE CLIENTE',
+        profileName: 'Nombre',
+        profilePhone: 'Teléfono',
+        profileEmail: 'Correo electrónico',
+        profilePrevButton: 'PREVIO',
+        profileNextButton: 'SIGUIENTE',
+        mainLowLabel: 'Bajo',
+        mainPressureLabel: 'Presión',
+        mainHighLabel: 'Alto',
+        mainRefreshSensors: 'Refrescar sensores',
+        mainStartButton: 'Inicio',
+        mainStopButton: 'Parar',
+        mainReportButton: 'Reportar',
+        mainEmailButton: 'Email',
+        mainDoneButton: 'Hecho',
+        mainScanningLabel: 'Buscando un sensor',
+        mainSensorNotFound: 'Sensor no encontrado',
+        mainRetryButton: 'Volver a intentar',
+        mainDemoModeButton: 'Modo de demostración',
+        mainPleaseWaitLabel: 'Espere por favor',
+        mainBackPos: 'Espalda',
+        mainSidePos: 'Lado',
+        mainSensor: 'Sensor',
+        mainAvgPressure: 'Presión media',
+        mainSurfaceArea: 'Área de superficie',
+        mainSupportArea: 'Area de apoyo',
+        mainOverpressureArea: 'Zona de sobrepresión',
+        mainStdDeviation: 'Desviación estándar',
+        mainEmailTitle: 'Introduce tu correo electrónico',
+        mainEmailCancelButton: 'Cancelar',
+        mainEmailSendButton: 'Enviar',
+        mainEmailResultTitle: 'El informe ha sido enviado',
+        mainEmailCloseButton: 'Cerrar',
+        mainEmailIncorrect: 'Correo electrónico es incorrecto',
+        unitGCM2: 'g/cm²',
+        unitPSI: 'PSI',
+        unitCM2: 'cm²',
+        unitIN2: 'in²',
+        reportDoneButton: 'Hecho',
+        reportEmailButton: 'Email',
+        reportPrintButton: 'Impresión',
+        pageBackButton: 'Volver atras',
+        sessionsDateRange: 'Rango de datos',
+        sessionsToday: 'Hoy',
+        sessionsThisWeek: 'Está semana',
+        sessionsThisMonth: 'Este mes',
+        sessionsLast7Days: 'Los últimos 7 días',
+        sessionsLast30Days: 'Los últimos 30 días',
+        sessionsCustom: 'Personalizado...',
+        sessionsStartDate: 'Fecha de inicio',
+        sessionsEndDate: 'Fecha final',
+        sessionsName: 'Nombre',
+        sessionsEmail: 'Correo electrónico',
+        sessionsPhone: 'Teléfono',
+        sessionsSearchButton: 'BUSCAR',
+        sessionsDateTimeLabel: 'Fecha y hora',
+        sessionsClientLabel: 'Cliente',
+        sessionsPressureMapsLabel: 'Mapas de presión',
+        sessionsOpeningLabel: 'Datos de la sesión de apertura',
+        sessionsCloseButton: 'Cerrar',
+        sessionsNothingFound: 'Nada encontrado',
+        tplHello: 'Hola %name%,',
+        tplName: 'Cliente',
+        tplTitle: 'Aqui esta tu perfil coincidente',
+        tplTitle2: 'Aqui esta tu resultado',
+        tplBack: 'Espalda',
+        tplSide: 'Lado',
+        tplSubject1: 'Su experiencia de mapeo de presión de colchón',
+        updateTitle: 'MANTENIMIENTO',
+        updateNeedUpdate: 'Esta aplicación debe ser actualizada',
+        updateNeedRestart: 'Esta aplicación debe reinciarse',
+        updateUpdateButton: 'ACTUALIZAR',
+        updateRestartButton: 'REINICIAR',
+        emailDefaultMode: 'Predeterminado',
+        emailCustomMode: 'Personalizado',
+        emailCustomTitle: 'Configuración de email personalizada',
+        emailServer: 'Servidor',
+        emailPort: 'Puerto',
+        emailUser: 'Nombre de usuario',
+        emailPassword: 'Clave',
+        emailProtocol: 'Protocolo',
+        emailTryToConnect: 'Intenta conectarte',
+        pressureMapGrid: 'Cuadrícula de mapa',
+        colorbarScale: 'Escala de barra de colores',
+    }
+    window.de = {
+        ln: 'de',
+        tapToStartButton: 'Zum Start anklicken',
+        settingsModeTitle: 'Modus',
+        settingsDefaultMode: 'Standardeinstellung',
+        settingsDefaultModeDescription: 'Hoch- und Querformat; zwei, drei oder vier Matratzen; Rücken- und Seitenlage.',
+        settingsDuoMode: 'Duo-Modus',
+        settingsDuoModeDescription: 'Ausrichtung im Hochformat; zwei Matratzen; Rückenlage.',
+        settingsLanguageTitle: 'Sprache',
+        settingsOptionsTitle: 'Optionen',
+        settingsMaxCorrectionFirst: 'Max. Korrektur für die erste Matratze',
+        settingsMaxCorrectionOther: 'Max. Korrektur für  anderen Matratzen',
+        settingsUnitSystemTitle: 'Einheiten',
+        settingsMetric: 'Metrisch',
+        settingsImperial: 'Imperiales',
+        settingsDefMattNameTitle: 'Standard Matratzen Name',
+        settingsMattress: 'Matratze',
+        settingsCancelButton: 'Abbrechen',
+        settingsSaveButton: 'Speichern',
+        profileTitle: 'KUNDENPROFIL',
+        profileName: 'Name',
+        profilePhone: 'Telefon',
+        profileEmail: 'E-mail',
+        profilePrevButton: 'VORHERIGE',
+        profileNextButton: 'NÄCHSTE',
+        mainLowLabel: 'NIEDRIG',
+        mainPressureLabel: 'DRUCK',
+        mainHighLabel: 'HOCH',
+        mainRefreshSensors: 'Sensoren aktualisieren',
+        mainStartButton: 'Start',
+        mainStopButton: 'Stop',
+        mainReportButton: 'Bericht',
+        mainEmailButton: 'E-mail',
+        mainDoneButton: 'Erledigt',
+        mainScanningLabel: 'Nach einem Sensor suchen',
+        mainSensorNotFound: 'Sensor nicht gefunden',
+        mainRetryButton: 'Wiederholen',
+        mainDemoModeButton: 'Demo Modus',
+        mainPleaseWaitLabel: 'Bitte warten',
+        mainBackPos: 'Zurück',
+        mainSidePos: 'Seiten',
+        mainSensor: 'Sensor',
+        mainAvgPressure: 'Durchschnittsdruck',
+        mainSurfaceArea: 'Gedrückte Oberfläche',
+        mainSupportArea: 'Unterstützter Bereich',
+        mainOverpressureArea: 'Überdruckgebiet',
+        mainStdDeviation: 'Standardabweichung',
+        mainEmailTitle: 'E-mail eingeben',
+        mainEmailCancelButton: 'Abbrechen',
+        mainEmailSendButton: 'Senden',
+        mainEmailResultTitle: 'Der Bericht wurde versendet',
+        mainEmailCloseButton: 'Schliessen',
+        mainEmailIncorrect: 'Die E-mail Adresse ist nicht korrekt',
+        unitGCM2: 'g/cm²',
+        unitPSI: 'PSI',
+        unitCM2: 'cm²',
+        unitIN2: 'in²',
+        reportDoneButton: 'Erledigt',
+        reportEmailButton: 'E-mail',
+        reportPrintButton: 'Drucken',
+        pageBackButton: 'Zurück',
+        sessionsDateRange: 'Datumsbereich',
+        sessionsToday: 'Heute',
+        sessionsThisWeek: 'Diese Woche',
+        sessionsThisMonth: 'Dieser Monat',
+        sessionsLast7Days: 'Die letzten 7 Tage',
+        sessionsLast30Days: 'Die letzten 30 Tage',
+        sessionsCustom: 'Benutzerdefiniert',
+        sessionsStartDate: 'Startdatum',
+        sessionsEndDate: 'Enddatum',
+        sessionsName: 'Name',
+        sessionsEmail: 'E-mail',
+        sessionsPhone: 'Telefon',
+        sessionsSearchButton: 'SUCHE',
+        sessionsDateTimeLabel: 'Datum Uhrzeit',
+        sessionsClientLabel: 'Auftraggeber',
+        sessionsPressureMapsLabel: 'Druckverteilung',
+        sessionsOpeningLabel: 'Messdaten öffnen',
+        sessionsCloseButton: 'Schliessen',
+        sessionsNothingFound: 'Nichts gefunden',
+        tplHello: 'Hallo %name%,',
+        tplName: 'Kunde',
+        tplTitle: 'Hier ist Ihr Profil passend',
+        tplTitle2: 'Hier ist Ihr Ergebnis',
+        tplBack: 'Zurück',
+        tplSide: 'Seite',
+        tplSubject1: 'Ihre Erfahrung mit der Druckmessung von Matratzen',
+        updateTitle: 'WARTUNG',
+        updateNeedUpdate: 'Diese Anwendung muss upgedated werden',
+        updateNeedRestart: 'Diese Anwendung muss erneut gestartet werden',
+        updateUpdateButton: 'UPDATE',
+        updateRestartButton: 'ERNEUT STARTEN',
+        emailDefaultMode: 'Standard',
+        emailCustomMode: 'Brauch',
+        emailCustomTitle: 'Benutzerdefinierte E-Mail-Einstellungen',
+        emailServer: 'Server',
+        emailPort: 'Port',
+        emailUser: 'Nutzername',
+        emailPassword: 'Passwort',
+        emailProtocol: 'Protokoll',
+        emailTryToConnect: 'Versuchen Sie sich zu verbinden',
+        pressureMapGrid: 'Druckkartenraster',
+        colorbarScale: 'Farbbalkenskala',
+    }
+
+    window.loc = window.en;
+
+
+    var ReactCreated = false;
+    function StartReact() {
+        if (ReactCreated == false) {
+            //---- Debug mode ----
+            //window.preset.RightMatrixSensor = null;
+
+            //--^^ Debug mode ^^--
+
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'js/main.js';
+            document.getElementsByTagName('body')[0].appendChild(script);
+            ReactCreated = true;
+        }
+    }
+
+    function InitCore() {
+        window.socket = new WebSocket(window.wsURL);
+        window.socket.onclose = function() {
+            console.error('Web socket closed.');
+            window.setTimeout(() => {InitCore();}, 100);
+        };
+        window.socket.onerror = function(error) {
+            console.error('Web socket error: '+error);
+            //InitCore();
+        };
+        window.socket.onopen = function(){
+            console.log('Web socket connected');
+            if (window.channel === null) {
+                window.channel = new QWebChannel(window.socket, function (channel) {
+                    window.core = channel.objects.core;
+                    window.updater = channel.objects.updater;
+                    console.log('Web channel created');
+                    StartReact();
+                });
+            } else {
+                window.channel.reconnect(window.socket);
+            }
+        };
+    }
+
+    if (window.testMode) {
+        StartReact();
+    } else {
+        InitCore();
+    }
+
+
+</script>
+    <div class="root" id="root"></div>
+<iframe style="width: 0; height: 0; display: none" id="template" >
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!--[if !mso]><!-->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <!--<![endif]-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta content="telephone=no" name="format-detection">
+        <title></title>
+        <!--[if (gte mso 9)|(IE)]>
+        <style type="text/css">
+            table {border-collapse: collapse;}
+        </style>
+        <![endif]-->
+        <style type="text/css">
+            body {
+                margin: 0 !important;
+                padding: 0;
+                background-color: #e9e8e7;
+            }
+            table {
+                border-spacing: 0;
+                font-family: sans-serif;
+                color: #000000;
+            }
+            td.padding {
+                padding: 0 20px 0 20px;
+            }
+            img {
+                border: 0;
+            }
+            div[style*="margin: 16px 0"] {
+                margin:0 !important;
+            }
+            h1 {
+                color: #000000;
+                font-size: 25px;
+                font-weight: normal;
+                margin: 10px 0 0 0;
+                text-align: center;
+            }
+            h2 {
+                color: #000000;
+                font-size: 20px;
+                font-weight: normal;
+                margin: 10px 0 30px 0;
+                text-align: center;
+            }
+
+            img.logo {
+                width: 130px;
+                margin: 5px 0 5px 20px;
+            }
+
+            img.logo_footer {
+                width: 130px;
+                margin: 5px 0 5px 0;
+            }
+
+
+            img.icon {
+                width: 30px;
+                margin: 5px 0 0 10px;
+            }
+            a.icon {
+                text-decoration: none!important;
+            }
+
+            div.white_line {
+                display: inline-block;
+                width: 100%;
+                height: 1px;
+                background-color: #ffffff;
+            }
+
+            p.address {
+                color: #ffffff;
+                font-weight: lighter;
+                font-size: 12px;
+                margin: 20px 0 50px 0;
+            }
+
+            td.st_icon img {
+                width: 60px;
+                margin-left: 10px;
+            }
+
+            a[x-apple-data-detectors] {
+                color: inherit !important;
+                text-decoration: none !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                font-weight: inherit !important;
+                line-height: inherit !important;
+            }
+
+            @media only screen and (max-width: 620px) {
+
+            }
+
+            p.stat {
+                text-align: center;
+                font-size: 20px;
+                margin: 20px 0 20px 0;
+            }
+
+            img.recomm {
+                width: 560px;
+                margin: 0 0 20px 0;
+                max-width: 100%;
+            }
+            p.digit {
+                font-size: 35px;
+                font-weight: bold;
+                color: #77AFB9;
+                padding-left: 40px;
+                margin: 25px 0 0 0;
+            }
+            p.text {
+                font-weight: bold;
+                font-size: 15px;
+                padding-right: 40px;
+                line-height: 20px;
+                margin: 25px 0 0 0;
+                color: #434344;
+            }
+            img.stat {
+                width: 40px;
+                vertical-align: middle;
+            }
+            span.digit {
+                display: inline-block;
+                width: 70px;
+                font-size: 30px;
+                margin-left: 10px;
+                vertical-align: middle;
+                color: #434344;
+            }
+            span.unit {
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 15px;
+                color: #434344;
+            }
+            h3.description {
+                margin: 40px 0 10px 0;
+                font-size: 25px;
+            }
+            h3.Blue {
+                color: #2BAEE7;
+            }
+            h3.Green {
+                color: #21CE92;
+            }
+            h3.LBlue {
+                color: #87F8FE;
+            }
+            p.description {
+                font-size: 18px;
+            }
+            img.map {
+                height: 350px;
+            }
+        </style>
+    </head>
+    <body bgcolor="#e9e8e7">
+
+    <!--[if (gte mso 9)|(IE)]>
+    <table width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td>
+    <![endif]-->
+
+
+    <table style="max-width: 600px; width: 100%; background-color: #282A2D" align="center" cellpadding="10" cellspacing="0" border="0">
+        <tr>
+            <td>
+                <img src="%logo%" class="logo" width="130" />
+            </td>
+        </tr>
+    </table>
+
+    <table style="max-width: 600px; width: 100%; background-color: #ffffff" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center">
+                <h1>{{tplHello}}</h1>
+                <h2>{{tplTitle2}}</h2>
+            </td>
+        </tr>
+    </table>
+
+    <table style="max-width: 600px; width: 100%; background-color: #ffffff" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <h2>{{title1}}</h2>
+                <img src="map1.png" class="map" height="350" style="max-width: 100%"/>
+            </td>
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <h2>{{title2}}</h2>
+                <img src="map2.png" class="map" height="350" style="max-width: 100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="left" valign="top" width="300" style="max-width: 50%; padding-left: 50px">
+                <br><br>
+                <h3>{{tplAvgPressure}}:</h3>
+                <img src="ap.jpg" class="stat" width="40" />
+                <span class="digit">{{ap1}}</span>
+                <span class="unit">{{unit1}}</span>
+
+                <h3>{{tplSurfaceArea}}:</h3>
+                <img src="sa.jpg" class="stat" width="40" />
+                <span class="digit">{{sa1}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <h3>{{tplOverpressureArea}}:</h3>
+                <img src="mp.jpg" class="stat" width="40" />
+                <span class="digit">{{oa1}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <br><br><br>
+            </td>
+
+            <td align="left" valign="top" width="300" style="max-width: 50%; padding-left: 50px">
+                <br><br>
+                <h3>{{tplAvgPressure}}:</h3>
+                <img src="ap.jpg" class="stat" width="40" />
+                <span class="digit">{{ap2}}</span>
+                <span class="unit">{{unit1}}</span>
+
+                <h3>{{tplSurfaceArea}}:</h3>
+                <img src="sa.jpg" class="stat" width="40" />
+                <span class="digit">{{sa2}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <h3>{{tplOverpressureArea}}:</h3>
+                <img src="mp.jpg" class="stat" width="40" />
+                <span class="digit">{{oa2}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <br><br><br>
+            </td>
+        </tr>
+
+    </table>
+
+
+
+
+
+
+
+
+    <table style="max-width: 600px; width: 100%; background-color: #282A2D" align="center" cellpadding="10" cellspacing="0" border="0">
+        <tr>
+            <td width="130px" style="width: 130px; padding-left: 20px">
+                <img src="%logo%" class="logo_footer" width="130" />
+            </td>
+            {{address}}
+        </tr>
+    </table>
+
+
+
+
+
+
+
+    <!--[if (gte mso 9)|(IE)]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+
+
+
+
+
+
+    </body>
+    </html>
+</iframe>
+<iframe style="width: 0; height: 0; display: none" id="template_match" >
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!--[if !mso]><!-->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <!--<![endif]-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta content="telephone=no" name="format-detection">
+        <title></title>
+        <!--[if (gte mso 9)|(IE)]>
+        <style type="text/css">
+            table {border-collapse: collapse;}
+        </style>
+        <![endif]-->
+        <style type="text/css">
+            body {
+                margin: 0 !important;
+                padding: 0;
+                background-color: #e9e8e7;
+            }
+            table {
+                border-spacing: 0;
+                font-family: sans-serif;
+                color: #000000;
+            }
+            td.padding {
+                padding: 0 20px 0 20px;
+            }
+            img {
+                border: 0;
+            }
+            div[style*="margin: 16px 0"] {
+                margin:0 !important;
+            }
+            h1 {
+                color: #000000;
+                font-size: 25px;
+                font-weight: normal;
+                margin: 10px 0 0 0;
+                text-align: center;
+            }
+            h2 {
+                color: #000000;
+                font-size: 18px;
+                font-weight: normal;
+                margin: 40px 0 20px 0;
+                text-align: center;
+            }
+
+            img.logo {
+                width: 130px;
+                margin: 5px 0 5px 20px;
+            }
+
+            img.logo_footer {
+                width: 130px;
+                margin: 5px 0 5px 0;
+            }
+
+
+            img.icon {
+                width: 30px;
+                margin: 5px 0 0 10px;
+            }
+            a.icon {
+                text-decoration: none!important;
+            }
+
+            div.white_line {
+                display: inline-block;
+                width: 100%;
+                height: 1px;
+                background-color: #ffffff;
+            }
+
+            p.address {
+                color: #ffffff;
+                font-weight: lighter;
+                font-size: 12px;
+                margin: 20px 0 50px 0;
+            }
+
+            td.st_icon img {
+                width: 60px;
+                margin-left: 10px;
+            }
+
+            a[x-apple-data-detectors] {
+                color: inherit !important;
+                text-decoration: none !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                font-weight: inherit !important;
+                line-height: inherit !important;
+            }
+
+            @media only screen and (max-width: 620px) {
+
+            }
+
+            p.stat {
+                text-align: center;
+                font-size: 20px;
+                margin: 20px 0 20px 0;
+            }
+
+            img.recomm {
+                width: 560px;
+                margin: 0 0 20px 0;
+                max-width: 100%;
+            }
+            p.digit {
+                font-size: 35px;
+                font-weight: bold;
+                color: #77AFB9;
+                padding-left: 40px;
+                margin: 25px 0 0 0;
+            }
+            p.text {
+                font-weight: bold;
+                font-size: 15px;
+                padding-right: 40px;
+                line-height: 20px;
+                margin: 25px 0 0 0;
+                color: #434344;
+            }
+            img.stat {
+                width: 40px;
+                vertical-align: middle;
+            }
+            span.digit {
+                display: inline-block;
+                width: 70px;
+                font-size: 30px;
+                margin-left: 10px;
+                vertical-align: middle;
+                color: #434344;
+            }
+            span.unit {
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 15px;
+                color: #434344;
+            }
+            h3.description {
+                margin: 40px 0 10px 0;
+                font-size: 25px;
+            }
+            h3.Blue {
+                color: #2BAEE7;
+            }
+            h3.Green {
+                color: #21CE92;
+            }
+            h3.LBlue {
+                color: #87F8FE;
+            }
+            p.description {
+                font-size: 18px;
+            }
+            img.map {
+                height: 350px;
+            }
+            img.circle {
+                width: 200px;
+                height: 200px;
+            }
+        </style>
+    </head>
+    <body bgcolor="#e9e8e7">
+
+    <!--[if (gte mso 9)|(IE)]>
+    <table width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td>
+    <![endif]-->
+
+
+    <table style="max-width: 600px; width: 100%; background-color: #282A2D" align="center" cellpadding="10" cellspacing="0" border="0">
+        <tr>
+            <td>
+                <img src="%logo%" class="logo" width="130" />
+            </td>
+        </tr>
+    </table>
+
+    <table style="max-width: 600px; width: 100%; background-color: #ffffff" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center">
+                <h1>{{tplHello}}</h1>
+                <h2>{{tplTitle}}</h2>
+                <img src="circle.png" width="200" class="circle">
+                <h1>{{MattressName}}</h1>
+
+            </td>
+        </tr>
+    </table>
+
+    <table style="max-width: 600px; width: 100%; background-color: #ffffff" align="center" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            %left_begin%
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <h2>{{tplBack}}</h2>
+                <img src="map1.png" class="map" height="350" style="max-width: 100%"/>
+            </td>
+            %left_end%
+            %right_begin%
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <h2>{{tplSide}}</h2>
+                <img src="map2.png" class="map" height="350" style="max-width: 100%"/>
+            </td>
+            %right_end%
+        </tr>
+        <tr>
+            %left_begin%
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <br><br>
+                <h3>{{tplAvgPressure}}:</h3>
+                <img src="ap.jpg" class="stat" width="40" />
+                <span class="digit">{{ap1}}</span>
+                <span class="unit">{{unit1}}</span>
+
+                <h3>{{tplSurfaceArea}}:</h3>
+                <img src="sa.jpg" class="stat" width="40" />
+                <span class="digit">{{sa1}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <h3>{{tplOverpressureArea}}:</h3>
+                <img src="mp.jpg" class="stat" width="40" />
+                <span class="digit">{{oa1}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <br><br><br>
+            </td>
+            %left_end%
+            %right_begin%
+            <td align="center" valign="top" width="300" style="max-width: 50%">
+                <br><br>
+                <h3>{{tplAvgPressure}}:</h3>
+                <img src="ap.jpg" class="stat" width="40" />
+                <span class="digit">{{ap2}}</span>
+                <span class="unit">{{unit1}}</span>
+
+                <h3>{{tplSurfaceArea}}:</h3>
+                <img src="sa.jpg" class="stat" width="40" />
+                <span class="digit">{{sa2}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <h3>{{tplOverpressureArea}}:</h3>
+                <img src="mp.jpg" class="stat" width="40" />
+                <span class="digit">{{oa2}}</span>
+                <span class="unit">{{unit2}}</span>
+
+                <br><br><br>
+            </td>
+            %right_end%
+        </tr>
+
+    </table>
+
+
+
+
+
+
+
+
+    <table style="max-width: 600px; width: 100%; background-color: #282A2D" align="center" cellpadding="10" cellspacing="0" border="0">
+        <tr>
+            <td width="130px" style="width: 130px; padding-left: 20px">
+                <img src="%logo%" class="logo_footer" width="130" />
+            </td>
+            {{address}}
+        </tr>
+    </table>
+
+
+
+
+
+
+
+    <!--[if (gte mso 9)|(IE)]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+
+
+
+
+
+
+    </body>
+    </html>
+</iframe>
+<script>
+    function setViewPort() {
+        let portrait = window.matchMedia('(orientation: portrait)').matches;
+        //console.log(portrait);
+        let vp = document.getElementById('viewPort');
+        if (portrait) {
+            vp.setAttribute('content', 'width=820, user-scalable=0');
+        } else {
+            vp.setAttribute('content', 'height=820, user-scalable=0');
+        }
+    }
+    setViewPort();
+    window.addEventListener('resize', setViewPort, false);
+    /*
+    window.matchMedia('(orientation: portrait)').addEventListener('change', (e) => {
+     console.log(e);
+    });
+    window.addEventListener("orientationchange", (event) => {
+        console.log(`the orientation of the device is now ${event.target.screen.orientation.angle}`);
+    });
+    */
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+.DS_Store
+.idea/
+node_modules/
+#/public/js/main.js
+#/public/css/main.css
+#/public/css/main.css.map
